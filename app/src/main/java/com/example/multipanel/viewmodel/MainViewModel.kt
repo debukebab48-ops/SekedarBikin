@@ -1,6 +1,7 @@
 package com.example.multipanel.viewmodel
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -8,7 +9,6 @@ import com.example.multipanel.data.FileRepository
 import com.example.multipanel.logic.CodeDetector
 import java.io.File
 
-// State buat nentuin pop-up (dialog) apa yang mau muncul
 sealed class SaveState {
     object Idle : SaveState()
     data class NeedFolder(val code: String) : SaveState()
@@ -20,12 +20,14 @@ class MainViewModel : ViewModel() {
 
     var currentFile by mutableStateOf<File?>(null)
     var fileContent by mutableStateOf("")
-
-    // State buat log & clipboard
     var logMessage by mutableStateOf("Siap menerima copy-an...")
     var lastClipboardText by mutableStateOf("")
     var saveState by mutableStateOf<SaveState>(SaveState.Idle)
+    
+    // TAMBAHAN: Trigger buat refresh file manager
+    var refreshTrigger by mutableIntStateOf(0) 
 
+    // ... (fungsi openFile & saveFile sama kayak sebelumnya) ...
     fun openFile(file: File) {
         currentFile = file
         fileContent = if (file.exists()) file.readText() else ""
@@ -35,10 +37,10 @@ class MainViewModel : ViewModel() {
         currentFile?.let { file ->
             file.writeText(fileContent)
             logMessage = "✅ Disimpan manual: ${file.name}"
+            refreshTrigger++ // Refresh file manager
         }
     }
 
-    // Dipanggil tiap ada perubahan clipboard
     fun processClipboard(text: String) {
         if (text == lastClipboardText || text.isBlank()) return
         lastClipboardText = text
@@ -47,20 +49,16 @@ class MainViewModel : ViewModel() {
         val name = CodeDetector.suggestName(text, lang)
 
         if (lang == null) {
-            // Ragu bahasa -> Tanya Folder
             saveState = SaveState.NeedFolder(text)
             logMessage = "⚠️ Bahasa tidak dikenal, pilih folder manual."
         } else if (name == null) {
-            // Yakin bahasa, ragu nama -> Tanya Nama
             saveState = SaveState.NeedName(text, lang)
             logMessage = "⚠️ Nama file tidak ditemukan, ketik manual."
         } else {
-            // Yakin semuanya -> Langsung Simpan
             doSave(lang, "$name.$lang", text)
         }
     }
 
-    // Kalau user milih folder manual dari dialog
     fun handleFolderSelected(folder: String, code: String) {
         val name = CodeDetector.suggestName(code, folder)
         if (name == null) {
@@ -70,12 +68,12 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // Fungsi eksekusi simpan
     fun doSave(folder: String, fileName: String, content: String) {
         try {
             val file = repository.saveNewFile(folder, fileName, content)
             logMessage = "✅ Auto-save: ${file.name} ke folder /$folder"
             saveState = SaveState.Idle
+            refreshTrigger++ // TAMBAHAN: Refresh file manager tiap abis nyimpen
         } catch (e: Exception) {
             logMessage = "❌ Gagal simpan: ${e.message}"
             saveState = SaveState.Idle
