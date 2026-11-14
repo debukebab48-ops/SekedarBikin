@@ -22,7 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel // IMPORT VIEWMODEL
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.multipanel.ui.panels.AiPanel
 import com.example.multipanel.ui.panels.EditorPanel
 import com.example.multipanel.ui.panels.FileManagerPanel
 import com.example.multipanel.viewmodel.MainViewModel
@@ -44,7 +45,7 @@ fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
     Row(Modifier.fillMaxSize().background(bgColor1)) {
         // 1. AI Panel (Kiri)
         Box(Modifier.weight(leftWeight).fillMaxHeight().background(bgColor2)) {
-            Text("1. AI Panel", color = Color.White, modifier = Modifier.align(Alignment.Center))
+            AiPanel()
         }
 
         // Garis Geser Vertikal
@@ -67,7 +68,7 @@ fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
             
             // 3. Editor Panel (Kanan Atas)
             Box(Modifier.weight(topRightWeight).fillMaxWidth()) {
-                EditorPanel(viewModel = mainViewModel) // PANGGIL EDITOR
+                EditorPanel(viewModel = mainViewModel)
             }
 
             // Garis Geser Horizontal 1
@@ -90,7 +91,7 @@ fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
                 
                 // 2. File Manager (Kanan Tengah)
                 Box(Modifier.weight(bottomRightTopWeight).fillMaxWidth().background(bgColor2)) {
-                    FileManagerPanel(modifier = Modifier.fillMaxSize(), viewModel = mainViewModel) // PANGGIL FILE MANAGER
+                    FileManagerPanel(modifier = Modifier.fillMaxSize(), viewModel = mainViewModel)
                 }
 
                 // Garis Geser Horizontal 2
@@ -116,4 +117,3 @@ fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
         }
     }
 }
- 
