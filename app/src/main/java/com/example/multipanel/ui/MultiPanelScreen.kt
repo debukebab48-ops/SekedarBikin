@@ -116,3 +116,4 @@ fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
         }
     }
 }
+ 
