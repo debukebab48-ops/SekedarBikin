@@ -22,10 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.example.multipanel.ui.panels.FileManagerPanel // IMPORT INI
+import androidx.lifecycle.viewmodel.compose.viewModel // IMPORT VIEWMODEL
+import com.example.multipanel.ui.panels.EditorPanel
+import com.example.multipanel.ui.panels.FileManagerPanel
+import com.example.multipanel.viewmodel.MainViewModel
 
 @Composable
-fun MultiPanelScreen() {
+fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.toFloat()
     val screenHeight = configuration.screenHeightDp.toFloat()
@@ -61,9 +64,10 @@ fun MultiPanelScreen() {
 
         // Kolom Kanan
         Column(Modifier.weight(1f - leftWeight).fillMaxHeight()) {
+            
             // 3. Editor Panel (Kanan Atas)
-            Box(Modifier.weight(topRightWeight).fillMaxWidth().background(bgColor1)) {
-                Text("3. Editor Panel", color = Color.White, modifier = Modifier.align(Alignment.Center))
+            Box(Modifier.weight(topRightWeight).fillMaxWidth()) {
+                EditorPanel(viewModel = mainViewModel) // PANGGIL EDITOR
             }
 
             // Garis Geser Horizontal 1
@@ -84,9 +88,9 @@ fun MultiPanelScreen() {
             // Kolom Kanan Bawah
             Column(Modifier.weight(1f - topRightWeight)) {
                 
-                // 2. File Manager (Kanan Tengah) - GANTI ISINYA
+                // 2. File Manager (Kanan Tengah)
                 Box(Modifier.weight(bottomRightTopWeight).fillMaxWidth().background(bgColor2)) {
-                    FileManagerPanel(modifier = Modifier.fillMaxSize())
+                    FileManagerPanel(modifier = Modifier.fillMaxSize(), viewModel = mainViewModel) // PANGGIL FILE MANAGER
                 }
 
                 // Garis Geser Horizontal 2
@@ -112,4 +116,3 @@ fun MultiPanelScreen() {
         }
     }
 }
- 
