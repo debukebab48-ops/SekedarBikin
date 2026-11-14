@@ -32,10 +32,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.multipanel.data.FileRepository
+import com.example.multipanel.viewmodel.MainViewModel
 import java.io.File
 
 @Composable
-fun FileManagerPanel(modifier: Modifier = Modifier) {
+fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multipanel.viewmodel.MainViewModel) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val repository = remember { FileRepository() }
@@ -120,7 +121,8 @@ fun FileManagerPanel(modifier: Modifier = Modifier) {
                                         // Kalau folder, masuk ke dalemnya
                                         currentPath = file.absolutePath
                                     } else {
-                                        // TODO: Kalau file, kirim ke Editor Panel (Task 4)
+                                        // Kirim file ke Editor
+                                        viewModel.openFile(file)
                                     }
                                 }
                                 .padding(12.dp)
