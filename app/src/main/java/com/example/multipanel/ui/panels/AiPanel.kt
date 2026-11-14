@@ -25,7 +25,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun AiPanel(modifier: Modifier = Modifier) {
-    // Simpen instance WebView biar bisa diakses dari luar factory
     var webViewInstance: WebView? = null
 
     Column(modifier = modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
@@ -53,9 +52,9 @@ fun AiPanel(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                // Kalau panel digeser, kirim sinyal 'resize' ke WebView
+                // Tiap panel digeser, panggil JS 'fitToScreen'
                 .onSizeChanged { 
-                    webViewInstance?.evaluateJavascript("window.dispatchEvent(new Event('resize'));", null)
+                    webViewInstance?.evaluateJavascript("fitToScreen();", null)
                 },
             factory = { context ->
                 WebView(context).apply {
@@ -65,43 +64,47 @@ fun AiPanel(modifier: Modifier = Modifier) {
                     )
                     setBackgroundColor(Color.Black.toArgb())
                     
-                    // Konfigurasi dasar
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     settings.databaseEnabled = true
                     
-                    // --- SETTINGAN KUNCI BIAR RESPONSIF ---
-                    // Paksa lebar web ngikutin panel, bukan ngikutin layar HP
-                    settings.useWideViewPort = false
-                    settings.loadWithOverviewMode = false
-                    
-                    // Paksa User Agent jadi Mobile
+                    // Paksa User Agent Mobile
                     settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
-
-                    // Matiin zoom biar gak muncul tombol aneh
-                    settings.setSupportZoom(false)
-                    settings.builtInZoomControls = false
-                    settings.displayZoomControls = false
 
                     webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
-                            // Suntik JavaScript: Paksa meta viewport biar web-nya ngecil (reflow)
+                            
+                            // JAVASCRIPT SAKTI: Nge-scale halaman web biar selalu pas sama lebar panel
                             val js = """
-                                var meta = document.querySelector('meta[name=viewport]');
-                                if (!meta) {
-                                    meta = document.createElement('meta');
-                                    meta.name = 'viewport';
-                                    document.getElementsByTagName('head')[0].appendChild(meta);
+                                function fitToScreen() {
+                                    var panelWidth = window.innerWidth;
+                                    // Reset scale dulu biar ukurannya akurat
+                                    document.body.style.transform = 'none';
+                                    document.body.style.width = '100%';
+                                    
+                                    var bodyWidth = document.body.scrollWidth;
+                                    
+                                    // Kalau web lebih lebar dari panel, kita kecilin (zoom out)
+                                    if (bodyWidth > panelWidth) {
+                                        var scale = panelWidth / bodyWidth;
+                                        document.body.style.transformOrigin = 'top left';
+                                        document.body.style.transform = 'scale(' + scale + ')';
+                                        // Lebarin body-nya biar pas abis di-scale
+                                        document.body.style.width = (100 / scale) + '%'; 
+                                    }
                                 }
-                                meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                                // Jalanin pas halaman pertama load
+                                fitToScreen();
+                                // Jalanin tiap layar di-resize (misal pas HP di-rotate)
+                                window.addEventListener('resize', fitToScreen);
                             """.trimIndent()
                             view?.evaluateJavascript(js, null)
                         }
                     }
                     
                     loadUrl("https://chat.deepseek.com/")
-                    webViewInstance = this // Simpen instance
+                    webViewInstance = this
                 }
             }
         )
