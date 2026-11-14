@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb // TAMBAHAN BUAT WEBVIEW
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +24,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun AiPanel(modifier: Modifier = Modifier) {
-    // Root layout wajib fillMaxSize
     Column(modifier = modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
         
         // Header Panel
@@ -41,11 +40,11 @@ fun AiPanel(modifier: Modifier = Modifier) {
                 fontSize = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f) // Pake weight biar fleksibel
+                modifier = Modifier.weight(1f)
             )
         }
 
-        // WebView dikasih weight(1f) biar ngisi sisa ruang di bawah header
+        // WebView
         AndroidView(
             modifier = Modifier.fillMaxWidth().weight(1f),
             factory = { context ->
@@ -54,7 +53,6 @@ fun AiPanel(modifier: Modifier = Modifier) {
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
-                    // WebView butuh Int buat warna background, jadi pake .toArgb()
                     setBackgroundColor(Color.Black.toArgb())
                     
                     // Konfigurasi dasar
@@ -62,10 +60,21 @@ fun AiPanel(modifier: Modifier = Modifier) {
                     settings.domStorageEnabled = true
                     settings.databaseEnabled = true
                     
-                    // KONFIGURASI RESPONSIF:
-                    // Biar halaman web ngecil dan nyesuaiin lebar panel (nggak overflow/gepeng)
-                    settings.useWideViewPort = true
+                    // --- SETTINGAN BIAR RESPONSIF DI PANEL KECIL ---
+                    // 1. Paksa User Agent jadi Mobile (biar web nampilin layout HP, bukan desktop)
+                    settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
+                    
+                    // 2. Matiin wide viewport biar web ngikutin lebar panel lu yang sebenarnya
+                    settings.useWideViewPort = false
                     settings.loadWithOverviewMode = true
+                    
+                    // 3. Izinkan zoom manual (jaga-jaga kalau user mau zoom in/out)
+                    settings.setSupportZoom(true)
+                    settings.builtInZoomControls = true
+                    settings.displayZoomControls = false
+                    
+                    // 4. Set skala teks ke default
+                    settings.textZoom = 100
 
                     webViewClient = WebViewClient()
                     loadUrl("https://chat.deepseek.com/")
