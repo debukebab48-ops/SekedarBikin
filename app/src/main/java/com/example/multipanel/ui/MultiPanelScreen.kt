@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import com.example.multipanel.ui.panels.FileManagerPanel // IMPORT INI
 
 @Composable
 fun MultiPanelScreen() {
@@ -29,24 +30,21 @@ fun MultiPanelScreen() {
     val screenWidth = configuration.screenWidthDp.toFloat()
     val screenHeight = configuration.screenHeightDp.toFloat()
 
-    // Bobot ukuran panel
     var leftWeight by rememberSaveable { mutableFloatStateOf(0.4f) }
     var topRightWeight by rememberSaveable { mutableFloatStateOf(0.6f) }
     var bottomRightTopWeight by rememberSaveable { mutableFloatStateOf(0.7f) }
 
-    // Warna Divider & Background
     val dividerColor = Color(0xFF333333)
-    val bgColor1 = Color(0xFF1E1E1E) // Gelap
-    val bgColor2 = Color(0xFF252526) // Agak terang
+    val bgColor1 = Color(0xFF1E1E1E)
+    val bgColor2 = Color(0xFF252526)
 
-    // Root Layout pakai fillMaxSize & background biar full satu layar
     Row(Modifier.fillMaxSize().background(bgColor1)) {
         // 1. AI Panel (Kiri)
         Box(Modifier.weight(leftWeight).fillMaxHeight().background(bgColor2)) {
             Text("1. AI Panel", color = Color.White, modifier = Modifier.align(Alignment.Center))
         }
 
-        // Garis Geser Vertikal (Kiri - Kanan) - Lebih tipis (4.dp)
+        // Garis Geser Vertikal
         Box(
             Modifier
                 .fillMaxHeight()
@@ -68,7 +66,7 @@ fun MultiPanelScreen() {
                 Text("3. Editor Panel", color = Color.White, modifier = Modifier.align(Alignment.Center))
             }
 
-            // Garis Geser Horizontal 1 - Lebih tipis (4.dp)
+            // Garis Geser Horizontal 1
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -85,12 +83,13 @@ fun MultiPanelScreen() {
 
             // Kolom Kanan Bawah
             Column(Modifier.weight(1f - topRightWeight)) {
-                // 2. File Manager (Kanan Tengah)
+                
+                // 2. File Manager (Kanan Tengah) - GANTI ISINYA
                 Box(Modifier.weight(bottomRightTopWeight).fillMaxWidth().background(bgColor2)) {
-                    Text("2. File Manager", color = Color.White, modifier = Modifier.align(Alignment.Center))
+                    FileManagerPanel(modifier = Modifier.fillMaxSize())
                 }
 
-                // Garis Geser Horizontal 2 - Lebih tipis (4.dp)
+                // Garis Geser Horizontal 2
                 Box(
                     Modifier
                         .fillMaxWidth()
