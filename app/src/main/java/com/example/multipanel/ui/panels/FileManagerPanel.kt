@@ -41,14 +41,10 @@ fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multi
     val lifecycleOwner = LocalLifecycleOwner.current
     val repository = remember { FileRepository() }
 
-    // Cek apakah udah dapet izin akses semua file
     var hasPermission by remember { mutableStateOf(Environment.isExternalStorageManager()) }
-    
-    // Mulai dari folder root storage HP
     var currentPath by remember { mutableStateOf(Environment.getExternalStorageDirectory().absolutePath) }
     var files by remember { mutableStateOf<List<File>>(emptyList()) }
 
-    // Cek ulang izin tiap kali app dibuka kembali (dari settings)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -59,16 +55,23 @@ fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multi
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Baca file tiap kali path berubah
-    LaunchedEffect(hasPermission, currentPath) {
+    // Baca file tiap kali path berubah ATAU ada file baru disimpan
+    LaunchedEffect(hasPermission, currentPath, viewModel.refreshTrigger) {
         if (hasPermission) {
             files = repository.getFiles(currentPath)
         }
     }
 
+    // AUTO-PINDAH FOLDER: Begitu file disimpan, File Manager pindah ke folder itu
+    LaunchedEffect(viewModel.lastSavedFolder) {
+        viewModel.lastSavedFolder?.let { newPath ->
+            currentPath = newPath
+            viewModel.lastSavedFolder = null // Reset biar nggak loop
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize().background(Color(0xFF252526))) {
         if (!hasPermission) {
-            // Tampilan kalau belum kasih izin
             Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Butuh akses penyimpanan", color = Color.White, fontSize = 12.sp)
                 Button(onClick = {
@@ -80,7 +83,6 @@ fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multi
                 }
             }
         } else {
-            // Tampilan File Manager
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(
                     text = currentPath,
@@ -91,8 +93,22 @@ fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multi
                 )
                 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    // Tombol kembali (kalau bukan di root)
                     if (currentPath != Environment.getExternalStorageDirectory().absolutePath) {
+                        // Tombol Ke Root (Penyimpanan Utama)
+                        item {
+                            Text(
+                                text = "🏠 Ke Penyimpanan Utama",
+                                color = Color(0xFF4CAF50), // Warna hijau
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        currentPath = Environment.getExternalStorageDirectory().absolutePath
+                                    }
+                                    .padding(12.dp)
+                            )
+                        }
+
+                        // Tombol kembali
                         item {
                             Text(
                                 text = "⬆️ .. (Kembali)",
@@ -118,10 +134,8 @@ fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multi
                                 .fillMaxWidth()
                                 .clickable {
                                     if (file.isDirectory) {
-                                        // Kalau folder, masuk ke dalemnya
                                         currentPath = file.absolutePath
                                     } else {
-                                        // Kirim file ke Editor
                                         viewModel.openFile(file)
                                     }
                                 }
