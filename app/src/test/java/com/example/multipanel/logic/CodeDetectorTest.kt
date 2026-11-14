@@ -50,4 +50,13 @@ class CodeDetectorTest {
         val jsCode = "function hitungTotal(a, b) { return a + b; }"
         assertEquals("hitungTotal", CodeDetector.suggestName(jsCode, "js"))
     }
+@Test
+fun testMarkdownClean() {
+    val markdown = """
+        ```css
+        .navbar { color: red; }
+        ```
+    """.trimIndent()
+    assertEquals("css", CodeDetector.detectLanguage(markdown))
+    assertEquals("navbar", CodeDetector.suggestName(markdown, "css"))
 }
