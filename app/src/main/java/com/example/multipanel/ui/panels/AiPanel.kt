@@ -1,7 +1,6 @@
 package com.example.multipanel.ui.panels
 
 import android.annotation.SuppressLint
-import android.graphics.Color
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -15,6 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb // TAMBAHAN BUAT WEBVIEW
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,7 +27,7 @@ fun AiPanel(modifier: Modifier = Modifier) {
     // Root layout wajib fillMaxSize
     Column(modifier = modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
         
-        // Header Panel (Biar rapi dan ngebuktiin Text overflow-nya jalan)
+        // Header Panel
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -40,7 +41,7 @@ fun AiPanel(modifier: Modifier = Modifier) {
                 fontSize = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f) // Pake weight biar fleksibel, bukan width fixed
+                modifier = Modifier.weight(1f) // Pake weight biar fleksibel
             )
         }
 
@@ -53,7 +54,8 @@ fun AiPanel(modifier: Modifier = Modifier) {
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
-                    setBackgroundColor(Color.BLACK)
+                    // WebView butuh Int buat warna background, jadi pake .toArgb()
+                    setBackgroundColor(Color.Black.toArgb())
                     
                     // Konfigurasi dasar
                     settings.javaScriptEnabled = true
@@ -61,7 +63,7 @@ fun AiPanel(modifier: Modifier = Modifier) {
                     settings.databaseEnabled = true
                     
                     // KONFIGURASI RESPONSIF:
-                    // Biar halaman web ngecil dan nyesuaiin lebar panel (nggak overflow)
+                    // Biar halaman web ngecil dan nyesuaiin lebar panel (nggak overflow/gepeng)
                     settings.useWideViewPort = true
                     settings.loadWithOverviewMode = true
 
