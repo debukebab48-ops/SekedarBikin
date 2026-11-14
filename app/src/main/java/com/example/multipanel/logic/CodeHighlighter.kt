@@ -3,12 +3,12 @@ package com.example.multipanel.logic
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 
 object CodeHighlighter {
     
     fun highlight(text: String, fileExtension: String): AnnotatedString {
-        val builder = buildAnnotatedString { append(text) }
+        // Pake AnnotatedString.Builder biar addStyle-nya kebaca
+        val builder = AnnotatedString.Builder(text)
         
         // Warna dasar syntax
         val keywordColor = Color(0xFF569CD6) // Biru
@@ -35,6 +35,6 @@ object CodeHighlighter {
             }
         }
 
-        return builder
+        return builder.toAnnotatedString()
     }
 }
