@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,8 +24,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun AiPanel(modifier: Modifier = Modifier) {
-    var webViewInstance: WebView? = null
-
     Column(modifier = modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
         
         // Header Panel
@@ -47,15 +44,9 @@ fun AiPanel(modifier: Modifier = Modifier) {
             )
         }
 
-        // WebView
+        // WebView (Versi Clean tanpa Hack)
         AndroidView(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                // Tiap panel digeser, panggil JS 'fitToScreen'
-                .onSizeChanged { 
-                    webViewInstance?.evaluateJavascript("fitToScreen();", null)
-                },
+            modifier = Modifier.fillMaxWidth().weight(1f),
             factory = { context ->
                 WebView(context).apply {
                     layoutParams = ViewGroup.LayoutParams(
@@ -64,47 +55,25 @@ fun AiPanel(modifier: Modifier = Modifier) {
                     )
                     setBackgroundColor(Color.Black.toArgb())
                     
+                    // Konfigurasi dasar
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     settings.databaseEnabled = true
                     
-                    // Paksa User Agent Mobile
+                    // Paksa User Agent jadi Mobile
                     settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
 
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            super.onPageFinished(view, url)
-                            
-                            // JAVASCRIPT SAKTI: Nge-scale halaman web biar selalu pas sama lebar panel
-                            val js = """
-                                function fitToScreen() {
-                                    var panelWidth = window.innerWidth;
-                                    // Reset scale dulu biar ukurannya akurat
-                                    document.body.style.transform = 'none';
-                                    document.body.style.width = '100%';
-                                    
-                                    var bodyWidth = document.body.scrollWidth;
-                                    
-                                    // Kalau web lebih lebar dari panel, kita kecilin (zoom out)
-                                    if (bodyWidth > panelWidth) {
-                                        var scale = panelWidth / bodyWidth;
-                                        document.body.style.transformOrigin = 'top left';
-                                        document.body.style.transform = 'scale(' + scale + ')';
-                                        // Lebarin body-nya biar pas abis di-scale
-                                        document.body.style.width = (100 / scale) + '%'; 
-                                    }
-                                }
-                                // Jalanin pas halaman pertama load
-                                fitToScreen();
-                                // Jalanin tiap layar di-resize (misal pas HP di-rotate)
-                                window.addEventListener('resize', fitToScreen);
-                            """.trimIndent()
-                            view?.evaluateJavascript(js, null)
-                        }
-                    }
+                    // Settingan Responsif Standar
+                    settings.useWideViewPort = false
+                    settings.loadWithOverviewMode = false
                     
+                    // Biarin web-nya yang ngatur zoom
+                    settings.setSupportZoom(true)
+                    settings.builtInZoomControls = true
+                    settings.displayZoomControls = false
+
+                    webViewClient = WebViewClient()
                     loadUrl("https://chat.deepseek.com/")
-                    webViewInstance = this
                 }
             }
         )
