@@ -79,4 +79,21 @@ class MainViewModel : ViewModel() {
             saveState = SaveState.Idle
         }
     }
+// TAMBAHKAN BARIS INI
+var lastSavedFolder by mutableStateOf<String?>(null) 
+
+fun doSave(folder: String, fileName: String, content: String) {
+    try {
+        val file = repository.saveNewFile(folder, fileName, content)
+        logMessage = "✅ Tersimpan: ${file.name}\n📁 Di: ${file.parent}" 
+        saveState = SaveState.Idle
+        refreshTrigger++ 
+        
+        // TAMBAHKAN BARIS INI: Kasih tau FileManager buat pindah folder
+        lastSavedFolder = file.parent 
+        
+    } catch (e: Exception) {
+        logMessage = "❌ Gagal simpan: ${e.message}"
+        saveState = SaveState.Idle
+    }
 }
