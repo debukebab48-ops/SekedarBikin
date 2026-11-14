@@ -22,6 +22,7 @@ import com.example.multipanel.ui.panels.FileManagerPanel
 import com.example.multipanel.viewmodel.MainViewModel
 import com.example.multipanel.viewmodel.SaveState
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
