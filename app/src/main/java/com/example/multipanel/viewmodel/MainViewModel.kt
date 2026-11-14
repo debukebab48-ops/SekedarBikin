@@ -68,15 +68,15 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun doSave(folder: String, fileName: String, content: String) {
-    try {
-        val file = repository.saveNewFile(folder, fileName, content)
-        // Tampilin path lengkap di log biar lo tau persis di mana
-        logMessage = "✅ Tersimpan: ${file.name}\n📁 Di: ${file.parent}" 
-        saveState = SaveState.Idle
-        refreshTrigger++ 
-    } catch (e: Exception) {
-        logMessage = "❌ Gagal simpan: ${e.message}"
-        saveState = SaveState.Idle
+        fun doSave(folder: String, fileName: String, content: String) {
+        try {
+            val file = repository.saveNewFile(folder, fileName, content)
+            logMessage = "✅ Tersimpan: ${file.name}\n📁 Di: ${file.parent}"
+            saveState = SaveState.Idle
+            refreshTrigger++
+        } catch (e: Exception) {
+            logMessage = "❌ Gagal simpan: ${e.message}"
+            saveState = SaveState.Idle
+        }
     }
 }
