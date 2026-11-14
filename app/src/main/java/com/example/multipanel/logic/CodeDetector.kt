@@ -2,48 +2,72 @@ package com.example.multipanel.logic
 
 object CodeDetector {
     
-    fun detectLanguage(text: String): String? {
-        val trimmed = text.trim()
-        if (trimmed.isEmpty()) return null
+    // Fungsi buat ngebersihin backtick (```) bawaan Markdown AI
+    fun cleanText(text: String): String {
+        val regex = "```[a-zA-Z]*\\n?".toRegex()
+        return text.replace(regex, "").replace("```", "").trim()
+    }
 
-        // 1. Cek HTML (Harus ada tag pembuka dan penutup beneran)
-        if (Regex("""<([a-z]+)[^>]*>[\s\S]*</\1>""").containsMatchIn(trimmed) || 
-            Regex("""<[a-z]+[^>]*/>""").containsMatchIn(trimmed)) {
+    fun detectLanguage(originalText: String): String? {
+        val text = cleanText(originalText)
+        if (text.isEmpty()) return null
+
+        // 1. Cek HTML
+        if (text.contains("<html", true) || text.contains("<div", true) || 
+            text.contains("<body", true) || text.contains("<!DOCTYPE", true)) {
             return "html"
         }
 
-        // 2. Cek CSS (Harus ada selector { properti: nilai; })
-        if (Regex("""[a-zA-Z0-9_\-.#]+\s*\{[^{}]*:[^{}]*\}""").containsMatchIn(trimmed)) {
-            return "css"
+        // 2. Cek CSS (Ada kurung kurawal, titik dua, dan titik koma)
+        if (text.contains("{") && text.contains("}") && text.contains(":")) {
+            val jsKeywords = Regex("\\b(function|const|let|var|return|import|export|class|=>)\\b")
+            // Pastiin bukan JS
+            if (!jsKeywords.containsMatchIn(text) && !text.contains("()")) {
+                return "css"
+            }
         }
 
-        // 3. Cek JS (Harus ada keyword JS yang jelas, bukan cuma kurung biasa)
-        val jsKeywords = Regex("""\b(function|const|let|var|return|import|export)\b""")
-        if (jsKeywords.containsMatchIn(trimmed) || trimmed.contains("=>") || trimmed.contains("console.log")) {
+        // 3. Cek JS
+        val jsKeywords = Regex("\\b(function|const|let|var|return|import|export|class|=>|console\\.log|document\\.)\\b")
+        if (jsKeywords.containsMatchIn(text) || text.contains("function") || text.contains("=>")) {
             return "js"
         }
 
         return null
     }
 
-    fun suggestName(text: String, lang: String?): String? {
+    fun suggestName(originalText: String, lang: String?): String? {
+        val text = cleanText(originalText)
         if (lang == null) return null
 
-        if (lang == "css") {
-            val cssMatch = Regex("""[.#]([a-zA-Z0-9_-]+)\s*\{""").find(text)
-            if (cssMatch != null) return cssMatch.groupValues[1] 
-        } 
-        
-        if (lang == "js") {
-            val funcMatch = Regex("""function\s+([a-zA-Z0-9_]+)""").find(text)
-            if (funcMatch != null) return funcMatch.groupValues[1]
-
-            // Ambil nama variabel const/let/var
-            val varMatch = Regex("""(?:const|let|var)\s+([a-zA-Z0-9_]+)\s*=""")
-.find(text)
-            if (varMatch != null) return varMatch.groupValues[1]
+        // Coba cari komentar nama file misal: /* style.css */ atau // app.js
+        val fileCommentRegex = Regex("(?:/\\*|//)\\s*([a-zA-Z0-9_-]+)\\.[a-zA-Z0-9]+")
+        val match = fileCommentRegex.find(text)
+        if (match != null) {
+            return match.groupValues[1]
         }
 
-        return null 
+        if (lang == "css") {
+            val cssMatch = Regex("[.#]([a-zA-Z0-9_-]+)\\s*\\{").find(text)
+            if (cssMatch != null) return cssMatch.groupValues[1]
+        }
+        
+        if (lang == "js") {
+            val funcMatch = Regex("function\\s+([a-zA-Z0-9_]+)").find(text)
+            if (funcMatch != null) return funcMatch.groupValues[1]
+
+            val varMatch = Regex("(?:const|let|var)\\s+([a-zA-Z0-9_]+)\\s*=").find(text)
+            if (varMatch != null) return varMatch.groupValues[1]
+            
+            val classMatch = Regex("class\\s+([a-zA-Z0-9_]+)").find(text)
+            if (classMatch != null) return classMatch.groupValues[1]
+        }
+
+        if (lang == "html") {
+            val titleMatch = Regex("<title>([^<]+)</title>", RegexOption.IGNORE_CASE).find(text)
+            if (titleMatch != null) return titleMatch.groupValues[1].trim().replace(" ", "_").lowercase()
+        }
+
+        return null
     }
 }
