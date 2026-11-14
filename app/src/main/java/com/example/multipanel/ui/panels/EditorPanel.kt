@@ -15,6 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.multipanel.logic.CodeHighlighter
@@ -49,7 +52,6 @@ fun EditorPanel(viewModel: MainViewModel) {
         // Area Text Editor
         if (file != null) {
             val fileExt = file.extension.lowercase()
-            val highlightedText = CodeHighlighter.highlight(viewModel.fileContent, fileExt)
 
             BasicTextField(
                 value = viewModel.fileContent,
@@ -61,9 +63,12 @@ fun EditorPanel(viewModel: MainViewModel) {
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                 ),
                 cursorBrush = SolidColor(Color.White),
-                // Panggil fungsi highlighter di sini
-                visualTransformation = androidx.compose.ui.text.input.VisualTransformation { 
-                    highlightedText 
+                // Panggil fungsi highlighter dibungkus TransformedText
+                visualTransformation = VisualTransformation { text ->
+                    TransformedText(
+                        CodeHighlighter.highlight(text.text, fileExt),
+                        OffsetMapping.Identity
+                    )
                 }
             )
         }
