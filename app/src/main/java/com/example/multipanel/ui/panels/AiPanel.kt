@@ -1,7 +1,10 @@
 package com.example.multipanel.ui.panels
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
@@ -14,8 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,7 +45,6 @@ fun AiPanel(modifier: Modifier = Modifier) {
             )
         }
 
-        // WebView (Versi Clean tanpa Hack)
         AndroidView(
             modifier = Modifier.fillMaxWidth().weight(1f),
             factory = { context ->
@@ -53,26 +53,31 @@ fun AiPanel(modifier: Modifier = Modifier) {
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
-                    setBackgroundColor(Color.Black.toArgb())
                     
-                    // Konfigurasi dasar
+                    // 1. Konfigurasi Dasar
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     settings.databaseEnabled = true
                     
-                    // Paksa User Agent jadi Mobile
-                    settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
-
-                    // Settingan Responsif Standar
-                    settings.useWideViewPort = false
-                    settings.loadWithOverviewMode = false
+                    // 2. Konfigurasi Responsif (Sesuai permintaan lo)
+                    settings.useWideViewPort = true
+                    settings.loadWithOverviewMode = true
                     
-                    // Biarin web-nya yang ngatur zoom
-                    settings.setSupportZoom(true)
-                    settings.builtInZoomControls = true
-                    settings.displayZoomControls = false
+                    // 3. Izinkan konten campuran (HTTP/HTTPS)
+                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    
+                    // 4. Trik "Samarkan WebView jadi Chrome HP" biar nggak Black Screen
+                    settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
+                    
+                    // 5. Terima Cookies (Biar login DeepSeek nggak gampang logout)
+                    val cookieManager = CookieManager.getInstance()
+                    cookieManager.setAcceptCookie(true)
+                    cookieManager.setAcceptThirdPartyCookies(this, true)
 
+                    // 6. Link tetap di dalam app
                     webViewClient = WebViewClient()
+                    
+                    // Muat URL
                     loadUrl("https://chat.deepseek.com/")
                 }
             }
