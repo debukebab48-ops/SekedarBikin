@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF7C4DFF), 
+    primary = Color(0xFF7C4DFF), // Warna ungu khas lo
     onPrimary = Color.White,
     background = Color(0xFF121212),
     surface = Color(0xFF1E1E1E),
@@ -24,7 +24,6 @@ fun MultiPanelTheme(
 ) {
     MaterialTheme(
         colorScheme = DarkColorScheme,
-        typography = Typography,
         content = content
     )
 }
