@@ -143,13 +143,18 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
                 }
             }
 
-            // VERTICAL DIVIDER (Fixed)
-            SmoothDivider(
-                isVertical = true,
-                modifier = Modifier.fillMaxHeight().width(4.dp),
-                onDrag = { delta ->
-                    leftWeight = (leftWeight + (delta / screenWidth)).coerceIn(0.15f, 0.85f)
-                }
+            // VERTICAL DIVIDER (Touch area 8.dp)
+            Box(
+                Modifier
+                    .fillMaxHeight()
+                    .width(8.dp)
+                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            leftWeight = (leftWeight + (dragAmount.x / screenWidth)).coerceIn(0.15f, 0.85f)
+                        }
+                    }
             )
 
             Column(Modifier.weight(1f - leftWeight).fillMaxHeight()) {
@@ -160,13 +165,18 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
                     }
                 }
 
-                // HORIZONTAL DIVIDER (Fixed)
-                SmoothDivider(
-                    isVertical = false,
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
-                    onDrag = { delta ->
-                        topRightWeight = (topRightWeight + (delta / screenHeight)).coerceIn(0.2f, 0.8f)
-                    }
+                // HORIZONTAL DIVIDER (Touch area 8.dp)
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                topRightWeight = (topRightWeight + (dragAmount.y / screenHeight)).coerceIn(0.2f, 0.8f)
+                            }
+                        }
                 )
 
                 Column(Modifier.weight(1f - topRightWeight)) {
@@ -177,14 +187,19 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
                         }
                     }
 
-                    // HORIZONTAL DIVIDER (Fixed)
-                    SmoothDivider(
-                        isVertical = false,
-                        modifier = Modifier.fillMaxWidth().height(4.dp),
-                        onDrag = { delta ->
-                            val actualDelta = delta / (screenHeight * (1f - topRightWeight))
-                            bottomRightTopWeight = (bottomRightTopWeight + actualDelta).coerceIn(0.1f, 0.9f)
-                        }
+                    // HORIZONTAL DIVIDER (Touch area 8.dp)
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                            .pointerInput(Unit) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
+                                    val actualDelta = dragAmount.y / (screenHeight * (1f - topRightWeight))
+                                    bottomRightTopWeight = (bottomRightTopWeight + actualDelta).coerceIn(0.1f, 0.9f)
+                                }
+                            }
                     )
 
                     // 4. Log Panel
@@ -228,23 +243,4 @@ fun PanelWrapper(title: String, onDoubleTap: () -> Unit, content: @Composable ()
             content()
         }
     }
-}
-
-// FIX: Pindahin modifier ukuran ke parameter biar dinamis
-@Composable
-fun SmoothDivider(
-    isVertical: Boolean,
-    modifier: Modifier = Modifier,
-    onDrag: (Float) -> Unit
-) {
-    Box(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    onDrag(if (isVertical) dragAmount.x else dragAmount.y)
-                }
-            }
-    )
 }
