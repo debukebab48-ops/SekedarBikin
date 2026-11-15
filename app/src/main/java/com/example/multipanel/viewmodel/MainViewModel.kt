@@ -18,7 +18,57 @@ sealed class SaveState {
 
 class MainViewModel : ViewModel() {
     private val repository = FileRepository()
+// TAMBAHKAN VARIABEL INI DI BAGIAN ATAS CLASS
+var isPreviewVisible by mutableStateOf(false)
+var previewHtml by mutableStateOf("")
 
+// TAMBAHKAN FUNGSI INI
+fun runPreview() {
+    try {
+        val dir = File(currentFolderPath)
+        if (!dir.exists() || !dir.isDirectory) {
+            logMessage = "❌ Folder tidak valid."
+            return
+        }
+
+        // Kumpulin file HTML, CSS, JS di folder ini
+        val htmlFiles = dir.listFiles { file -> file.extension.lowercase() == "html" }
+        val cssFiles = dir.listFiles { file -> file.extension.lowercase() == "css" }
+        val jsFiles = dir.listFiles { file -> file.extension.lowercase() == "js" }
+
+        val htmlContent = htmlFiles?.firstOrNull()?.readText() ?: "<html><body><h2>Preview Kosong</h2></body></html>"
+        val cssContent = cssFiles?.joinToString("\n") { it.readText() } ?: ""
+        val jsContent = jsFiles?.joinToString("\n") { it.readText() } ?: ""
+
+        // Gabungin semuanya jadi 1 string HTML utuh
+        val combinedHtml = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>$cssContent</style>
+            </head>
+            <body>
+                $htmlContent
+                <script>
+                    try {
+                        $jsContent
+                    } catch (e) {
+                        Android.logError(e.message);
+                    }
+                </script>
+            </body>
+            </html>
+        """.trimIndent()
+
+        previewHtml = combinedHtml
+        isPreviewVisible = true
+        logMessage = "▶️ Preview dijalankan. Memuat file dari: /${dir.name}"
+        
+    } catch (e: Exception) {
+        logMessage = "❌ Gagal memuat preview: ${e.message}"
+    }
+}
     var currentFile by mutableStateOf<File?>(null)
     var fileContent by mutableStateOf("")
     var logMessage by mutableStateOf("Siap menerima copy-an...")
