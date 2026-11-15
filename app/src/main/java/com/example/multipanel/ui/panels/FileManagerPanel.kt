@@ -36,19 +36,17 @@ import com.example.multipanel.viewmodel.MainViewModel
 import java.io.File
 
 @Composable
-fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multipanel.viewmodel.MainViewModel) {
+fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: MainViewModel) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val repository = remember { FileRepository() }
 
-    // Cek apakah udah dapet izin akses semua file
     var hasPermission by remember { mutableStateOf(Environment.isExternalStorageManager()) }
-    
-    // Mulai dari folder root storage HP
-    var currentPath by remember { mutableStateOf(Environment.getExternalStorageDirectory().absolutePath) }
     var files by remember { mutableStateOf<List<File>>(emptyList()) }
 
-    // Cek ulang izin tiap kali app dibuka kembali (dari settings)
+    // Gunakan path dari ViewModel
+    val currentPath = viewModel.currentFolderPath
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -59,25 +57,22 @@ fun FileManagerPanel(modifier: Modifier = Modifier, viewModel: com.example.multi
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Baca file tiap kali path berubah
-    // Baca file tiap kali path berubah ATAU ada file baru disimpan
-     LaunchedEffect(hasPermission, currentPath, viewModel.refreshTrigger) {
-    if (hasPermission) {
-        files = repository.getFiles(currentPath)
+    LaunchedEffect(hasPermission, currentPath, viewModel.refreshTrigger) {
+        if (hasPermission) {
+            files = repository.getFiles(currentPath)
+        }
     }
-}
 
-// AUTO-PINDAH FOLDER: Begitu file disimpan, File Manager pindah ke folder itu
-LaunchedEffect(viewModel.lastSavedFolder) {
-    viewModel.lastSavedFolder?.let { newPath ->
-        currentPath = newPath
-        viewModel.lastSavedFolder = null // Reset biar nggak loop
+    LaunchedEffect(viewModel.lastSavedFolder) {
+        viewModel.lastSavedFolder?.let { newPath ->
+            // Update path di ViewModel, bukan di state lokal
+            viewModel.updateCurrentFolder(newPath)
+            viewModel.lastSavedFolder = null 
+        }
     }
-}
 
     Box(modifier = modifier.fillMaxSize().background(Color(0xFF252526))) {
         if (!hasPermission) {
-            // Tampilan kalau belum kasih izin
             Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Butuh akses penyimpanan", color = Color.White, fontSize = 12.sp)
                 Button(onClick = {
@@ -89,7 +84,6 @@ LaunchedEffect(viewModel.lastSavedFolder) {
                 }
             }
         } else {
-            // Tampilan File Manager
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(
                     text = currentPath,
@@ -100,41 +94,39 @@ LaunchedEffect(viewModel.lastSavedFolder) {
                 )
                 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    // Tombol kembali (kalau bukan di root)
-                // Tombol Ke Root (Penyimpanan Utama)
-if (currentPath != Environment.getExternalStorageDirectory().absolutePath) {
-    item {
-        Text(
-            text = "🏠 Ke Penyimpanan Utama",
-            color = Color(0xFF4CAF50), // Warna hijau
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    currentPath = Environment.getExternalStorageDirectory().absolutePath
-                }
-                .padding(12.dp)
-        )
-    }
-}
+                    // Tombol Ke Root
+                    if (currentPath != Environment.getExternalStorageDirectory().absolutePath) {
+                        item {
+                            Text(
+                                text = "🏠 Ke Penyimpanan Utama",
+                                color = Color(0xFF4CAF50),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        viewModel.updateCurrentFolder(Environment.getExternalStorageDirectory().absolutePath)
+                                    }
+                                    .padding(12.dp)
+                            )
+                        }
+                    }
 
- // Tombol kembali (kalau bukan di root)
-    if (currentPath != Environment.getExternalStorageDirectory().absolutePath) {
-    item {
-        Text(
-            text = "⬆️ .. (Kembali)",
-            color = Color.Cyan,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    val parent = File(currentPath).parent
-                    if (parent != null) currentPath = parent
-                }
-                .padding(12.dp)
-        )
-    }
-}
+                    // Tombol Kembali
+                    if (currentPath != Environment.getExternalStorageDirectory().absolutePath) {
+                        item {
+                            Text(
+                                text = "⬆️ .. (Kembali)",
+                                color = Color.Cyan,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val parent = File(currentPath).parent
+                                        if (parent != null) viewModel.updateCurrentFolder(parent)
+                                    }
+                                    .padding(12.dp)
+                            )
+                        }
+                    }
 
-                    // List file/folder
                     items(files) { file ->
                         Text(
                             text = (if (file.isDirectory) "📁 " else "📄 ") + file.name,
@@ -144,10 +136,9 @@ if (currentPath != Environment.getExternalStorageDirectory().absolutePath) {
                                 .fillMaxWidth()
                                 .clickable {
                                     if (file.isDirectory) {
-                                        // Kalau folder, masuk ke dalemnya
-                                        currentPath = file.absolutePath
+                                        // Update path di ViewModel
+                                        viewModel.updateCurrentFolder(file.absolutePath)
                                     } else {
-                                        // Kirim file ke Editor
                                         viewModel.openFile(file)
                                     }
                                 }
