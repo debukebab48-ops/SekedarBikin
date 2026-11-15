@@ -149,4 +149,20 @@ fun runPreview() {
             saveState = SaveState.Idle
         }
     }
+// ... imports ...
+// Tambahin enum ini di atas class MainViewModel
+enum class PanelType { AI, EDITOR, FILE_MANAGER, LOG }
+
+class MainViewModel : ViewModel() {
+    private val repository = FileRepository()
+    
+    // STATE BARU UNTUK FOCUS MODE
+    var focusedPanel by mutableStateOf<PanelType?>(null)
+        private set
+
+    fun toggleFocus(panel: PanelType) {
+        focusedPanel = if (focusedPanel == panel) null else panel
+    }
+    
+    // ... sisa kode lo yang lain (isPreviewVisible, previewHtml, runPreview, dll) tetep sama ...
 }
