@@ -1,5 +1,6 @@
 package com.example.multipanel.viewmodel
 
+import android.os.Environment
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,12 +24,15 @@ class MainViewModel : ViewModel() {
     var logMessage by mutableStateOf("Siap menerima copy-an...")
     var lastClipboardText by mutableStateOf("")
     var saveState by mutableStateOf<SaveState>(SaveState.Idle)
+    var refreshTrigger by mutableIntStateOf(0) 
+    var lastSavedFolder by mutableStateOf<String?>(null) 
 
-    // Trigger buat refresh file manager
-    var refreshTrigger by mutableIntStateOf(0)
+    // 1. STATE HOISTING: Pindahin currentFolderPath ke sini
+    var currentFolderPath by mutableStateOf(Environment.getExternalStorageDirectory().absolutePath)
 
-    // Folder terakhir yang dipakai buat auto-pindah FileManager
-    var lastSavedFolder by mutableStateOf<String?>(null)
+    fun updateCurrentFolder(path: String) {
+        currentFolderPath = path
+    }
 
     fun openFile(file: File) {
         currentFile = file
@@ -39,7 +43,7 @@ class MainViewModel : ViewModel() {
         currentFile?.let { file ->
             file.writeText(fileContent)
             logMessage = "✅ Disimpan manual: ${file.name}"
-            refreshTrigger++
+            refreshTrigger++ 
         }
     }
 
@@ -70,15 +74,26 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun doSave(folder: String, fileName: String, content: String) {
+    fun doSave(lang: String, fileName: String, content: String) {
         try {
-            val file = repository.saveNewFile(folder, fileName, content)
-            logMessage = "✅ Tersimpan: ${file.name}\n📁 Di: ${file.parent}"
-            saveState = SaveState.Idle
-            refreshTrigger++
+            val currentDir = File(currentFolderPath)
+            
+            // 3. BEST PRACTICE: Cek apakah folder sekarang namanya udah sama dengan bahasa (misal udah di dalem folder 'css')
+            val targetDirPath = if (currentDir.name == lang || currentDir.name == "${lang}s") {
+                currentDir.absolutePath // Simpan langsung di sini
+            } else {
+                File(currentDir, lang).absolutePath // Bikin subfolder (misal /gw test/css)
+            }
 
-            // Kasih tau FileManager buat pindah folder
-            lastSavedFolder = file.parent
+            val file = repository.saveNewFile(targetDirPath, fileName, content)
+            
+            logMessage = "✅ Tersimpan: ${file.name}\n📁 Di: ${file.parent}" 
+            saveState = SaveState.Idle
+            refreshTrigger++ 
+            
+            // Otomatis pindah ke folder tempat file disimpen
+            lastSavedFolder = file.parent 
+            
         } catch (e: Exception) {
             logMessage = "❌ Gagal simpan: ${e.message}"
             saveState = SaveState.Idle
