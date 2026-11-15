@@ -29,7 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun MultiPanelScreen(mainViewModel: MainViewModel = viewModel()) {
-    MultiPanelTheme { // Bungkus pake Material 3 Theme
+    MultiPanelTheme {
         MultiPanelContent(mainViewModel)
     }
 }
@@ -45,9 +45,7 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
     var topRightWeight by rememberSaveable { mutableFloatStateOf(0.6f) }
     var bottomRightTopWeight by rememberSaveable { mutableFloatStateOf(0.7f) }
 
-    val dividerColor = MaterialTheme.colorScheme.outline
     val bgColor1 = MaterialTheme.colorScheme.background
-    val bgColor2 = MaterialTheme.colorScheme.surface
 
     // --- PEMANTAU CLIPBOARD OTOMATIS ---
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -117,7 +115,6 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
     val focused = mainViewModel.focusedPanel
 
     if (focused != null) {
-        // Tampilan Full Screen kalau ada panel yang di-focus
         Box(Modifier.fillMaxSize().background(bgColor1)) {
             when (focused) {
                 PanelType.AI -> PanelWrapper("Web AI (DeepSeek)", onDoubleTap = { mainViewModel.toggleFocus(PanelType.AI) }) {
@@ -130,7 +127,6 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
                     FileManagerPanel(modifier = Modifier.fillMaxSize(), viewModel = mainViewModel)
                 }
                 PanelType.LOG -> PanelWrapper("Log", onDoubleTap = { mainViewModel.toggleFocus(PanelType.LOG) }) {
-                    // Sementara pake Log inline, nanti pas step Log Panel kita ganti
                     Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
                         Text(mainViewModel.logMessage, color = MaterialTheme.colorScheme.primary)
                     }
@@ -147,9 +143,14 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
                 }
             }
 
-            SmoothDivider(isVertical = true, onDrag = { delta ->
-                leftWeight = (leftWeight + (delta / screenWidth)).coerceIn(0.15f, 0.85f)
-            })
+            // VERTICAL DIVIDER (Fixed)
+            SmoothDivider(
+                isVertical = true,
+                modifier = Modifier.fillMaxHeight().width(4.dp),
+                onDrag = { delta ->
+                    leftWeight = (leftWeight + (delta / screenWidth)).coerceIn(0.15f, 0.85f)
+                }
+            )
 
             Column(Modifier.weight(1f - leftWeight).fillMaxHeight()) {
                 // 3. Editor Panel
@@ -159,9 +160,14 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
                     }
                 }
 
-                SmoothDivider(isVertical = false, onDrag = { delta ->
-                    topRightWeight = (topRightWeight + (delta / screenHeight)).coerceIn(0.2f, 0.8f)
-                })
+                // HORIZONTAL DIVIDER (Fixed)
+                SmoothDivider(
+                    isVertical = false,
+                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                    onDrag = { delta ->
+                        topRightWeight = (topRightWeight + (delta / screenHeight)).coerceIn(0.2f, 0.8f)
+                    }
+                )
 
                 Column(Modifier.weight(1f - topRightWeight)) {
                     // 2. File Manager
@@ -171,10 +177,15 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
                         }
                     }
 
-                    SmoothDivider(isVertical = false, onDrag = { delta ->
-                        val actualDelta = delta / (screenHeight * (1f - topRightWeight))
-                        bottomRightTopWeight = (bottomRightTopWeight + actualDelta).coerceIn(0.1f, 0.9f)
-                    })
+                    // HORIZONTAL DIVIDER (Fixed)
+                    SmoothDivider(
+                        isVertical = false,
+                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                        onDrag = { delta ->
+                            val actualDelta = delta / (screenHeight * (1f - topRightWeight))
+                            bottomRightTopWeight = (bottomRightTopWeight + actualDelta).coerceIn(0.1f, 0.9f)
+                        }
+                    )
 
                     // 4. Log Panel
                     Box(Modifier.weight(1f - bottomRightTopWeight).fillMaxWidth()) {
@@ -190,7 +201,6 @@ private fun MultiPanelContent(mainViewModel: MainViewModel) {
     }
 }
 
-// Wrapper buat naro Header & deteksi Double Tap
 @Composable
 fun PanelWrapper(title: String, onDoubleTap: () -> Unit, content: @Composable () -> Unit) {
     Column(
@@ -201,7 +211,6 @@ fun PanelWrapper(title: String, onDoubleTap: () -> Unit, content: @Composable ()
                 detectTapGestures(onDoubleTap = { onDoubleTap() })
             }
     ) {
-        // Header Panel
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -215,21 +224,21 @@ fun PanelWrapper(title: String, onDoubleTap: () -> Unit, content: @Composable ()
                 fontWeight = FontWeight.Bold
             )
         }
-        // Konten Panel
         Box(modifier = Modifier.weight(1f)) {
             content()
         }
     }
 }
 
+// FIX: Pindahin modifier ukuran ke parameter biar dinamis
 @Composable
-fun SmoothDivider(isVertical: Boolean, onDrag: (Float) -> Unit) {
+fun SmoothDivider(
+    isVertical: Boolean,
+    modifier: Modifier = Modifier,
+    onDrag: (Float) -> Unit
+) {
     Box(
-        Modifier
-            .fillMaxHeight(if (isVertical) 1f else 0f)
-            .fillMaxWidth(if (isVertical) 0f else 1f)
-            .width(if (isVertical) 2.dp else 0.dp)
-            .height(if (isVertical) 0.dp else 2.dp)
+        modifier = modifier
             .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
