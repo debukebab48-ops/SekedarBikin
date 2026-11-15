@@ -1,7 +1,6 @@
 package com.example.multipanel.ui.panels
 
 import android.annotation.SuppressLint
-import android.graphics.Color
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebSettings
@@ -17,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color // <-- INI YANG DIBENERIN
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +59,7 @@ fun AiPanel(modifier: Modifier = Modifier) {
                     settings.domStorageEnabled = true
                     settings.databaseEnabled = true
                     
-                    // 2. Konfigurasi Responsif (Sesuai permintaan lo)
+                    // 2. Konfigurasi Responsif
                     settings.useWideViewPort = true
                     settings.loadWithOverviewMode = true
                     
