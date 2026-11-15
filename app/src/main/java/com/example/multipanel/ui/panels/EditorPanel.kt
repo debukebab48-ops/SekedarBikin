@@ -22,7 +22,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.multipanel.viewmodel.MainViewModel
-
+import androidx.compose.ui.platform.LocalContext
 @Composable
 fun EditorPanel(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     var showPreviewDialog by remember { mutableStateOf(false) }
